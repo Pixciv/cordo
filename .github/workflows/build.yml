@@ -30,9 +30,16 @@ jobs:
       - name: Install Cordova CLI
         run: npm install -g cordova
 
+      - name: Install Cordova Android Platform
+        run: |
+          npm install
+          cordova platform add android
+
       - name: Decode Keystore from Secrets
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > my-release-key.keystore
+          # Keystore'u kontrol et
+          keytool -list -v -keystore my-release-key.keystore -storepass "${{ secrets.KEYSTORE_PASSWORD }}" -alias "${{ secrets.KEY_ALIAS }}" || echo "Keystore check completed"
 
       - name: Create build.json for signing
         run: |
@@ -44,30 +51,39 @@ jobs:
                 "storePassword": "${{ secrets.KEYSTORE_PASSWORD }}",
                 "alias": "${{ secrets.KEY_ALIAS }}",
                 "password": "${{ secrets.KEY_PASSWORD }}",
-                "keystoreType": ""
+                "keystoreType": "PKCS12"
               }
             }
           }
           EOF
+          
+      - name: Show build.json (debug)
+        run: cat build.json
 
-      - name: Build Release APK (Not AAB)
+      - name: Clean previous builds
         run: |
-          cordova build android --release --buildConfig=build.json -- --packageType=apk
+          cordova clean android
+
+      - name: Build Release APK
+        run: |
+          cordova build android --release --buildConfig=build.json
 
       - name: Find and Copy APK
         run: |
-          APK_PATH=$(find platforms/android/app/build/outputs/apk/release -name "*.apk" | head -n 1)
+          APK_PATH=$(find platforms/android/app/build/outputs -name "*.apk" | grep release | head -n 1)
           echo "Found APK: $APK_PATH"
           if [ -f "$APK_PATH" ]; then
             mkdir -p upload-apk
-            cp "$APK_PATH" upload-apk/
+            cp "$APK_PATH" upload-apk/app-release.apk
+            ls -la upload-apk/
           else
-            echo "❌ APK not found."
+            echo "❌ APK not found. Listing directories..."
+            find platforms/android/app/build/outputs -type f -name "*.apk"
             exit 1
           fi
 
       - name: Upload APK Artifact
         uses: actions/upload-artifact@v4
         with:
-          name: android-apk
-          path: upload-apk/*.apk
+          name: android-release-apk
+          path: upload-apk/app-release.apk
