@@ -3,7 +3,7 @@ name: Build Cordova Android APK
 on:
   push:
     branches:
-      - main
+      - main 
 
 jobs:
   build:
