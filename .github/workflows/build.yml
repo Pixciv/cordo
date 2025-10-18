@@ -10,31 +10,31 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-      - name: Checkout repository
+      - name: 📥 Kodu çek
         uses: actions/checkout@v4
 
-      - name: Set up Node.js
+      - name: ⚙️ Node.js Kurulumu
         uses: actions/setup-node@v4
         with:
           node-version: '18'
 
-      - name: Set up Java 17
+      - name: ☕ Java 17 Kurulumu
         uses: actions/setup-java@v3
         with:
           distribution: 'temurin'
           java-version: '17'
 
-      - name: Set up Android SDK
+      - name: 🤖 Android SDK Kurulumu
         uses: android-actions/setup-android@v2
 
-      - name: Install Cordova CLI
+      - name: 📦 Cordova CLI Kurulumu
         run: npm install -g cordova
 
-      - name: Decode Keystore from Secrets
+      - name: 🔐 Keystore'u Base64'ten Decode Et
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > my-release-key.keystore
 
-      - name: Create build.json for signing
+      - name: 📝 build.json Dosyasını Oluştur
         run: |
           cat > build.json <<EOF
           {
@@ -44,17 +44,17 @@ jobs:
                 "storePassword": "${{ secrets.KEYSTORE_PASSWORD }}",
                 "alias": "${{ secrets.KEY_ALIAS }}",
                 "password": "${{ secrets.KEY_PASSWORD }}",
-                "keystoreType": ""
+                "keystoreType": "jks"
               }
             }
           }
           EOF
 
-      - name: Build Release APK (Not AAB)
+      - name: 🛠️ APK Oluştur (Release)
         run: |
           cordova build android --release --buildConfig=build.json -- --packageType=apk
 
-      - name: Find and Copy APK
+      - name: 📦 APK'yi Bul ve Kopyala
         run: |
           APK_PATH=$(find platforms/android/app/build/outputs/apk/release -name "*.apk" | head -n 1)
           echo "Found APK: $APK_PATH"
@@ -62,11 +62,11 @@ jobs:
             mkdir -p upload-apk
             cp "$APK_PATH" upload-apk/
           else
-            echo "❌ APK not found."
+            echo "❌ APK bulunamadı."
             exit 1
           fi
 
-      - name: Upload APK Artifact
+      - name: ☁️ APK’yi Artifact Olarak Yükle
         uses: actions/upload-artifact@v4
         with:
           name: android-apk
