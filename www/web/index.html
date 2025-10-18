@@ -1,0 +1,2423 @@
+<!DOCTYPE html>
+<html lang="tr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>PDF Okuyucu ve Yönetici</title>
+    
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@100..900&display=swap" rel="stylesheet">
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Rounded:opsz,wght,FILL,GRAD@20..48,100..700,0..1,-50..200" rel="stylesheet" />
+    
+    <style>
+        :root {
+            /* Light Mode - Modern Kırmızı Beyaz Tema */
+            --color-primary: #D32F2F;
+            --color-primary-light: #FF6659;
+            --color-primary-dark: #9A0007;
+            --color-on-primary: #FFFFFF;
+            --color-secondary: #757575;
+            --color-tertiary: #C62828;
+            --color-surface: #FFFFFF;
+            --color-surface-variant: #F5F5F5;
+            --color-on-surface: #212121;
+            --color-on-surface-variant: #616161;
+            --color-outline: #E0E0E0;
+            --color-shadow: rgba(0, 0, 0, 0.08);
+            --color-light-hover: rgba(211, 47, 47, 0.04);
+            --color-error: #D32F2F;
+            --color-success: #388E3C;
+            --color-info: #1976D2;
+            --color-warning: #F57C00;
+            
+            /* Dark Mode - Kırmızı Tansiyonlu Dark Tema */
+            --color-dark-primary: #FF5252;
+            --color-dark-primary-light: #FF867F;
+            --color-dark-primary-dark: #C50E29;
+            --color-dark-on-primary: #121212;
+            --color-dark-bg: #121212;
+            --color-dark-surface: #1E1E1E;
+            --color-dark-surface-variant: #2D2D2D;
+            --color-dark-on-surface: #F5F5F5;
+            --color-dark-on-surface-variant: #B0B0B0;
+            --color-dark-outline: #424242;
+            --color-dark-hover: rgba(255, 82, 82, 0.08);
+            --color-dark-error: #FF5252;
+            --color-dark-shadow: rgba(0, 0, 0, 0.3);
+        }
+        
+        .dark {
+            --color-primary: var(--color-dark-primary);
+            --color-primary-light: var(--color-dark-primary-light);
+            --color-primary-dark: var(--color-dark-primary-dark);
+            --color-on-primary: var(--color-dark-on-primary);
+            --color-surface: var(--color-dark-bg);
+            --color-surface-variant: var(--color-dark-surface-variant);
+            --color-on-surface: var(--color-dark-on-surface);
+            --color-on-surface-variant: var(--color-dark-on-surface-variant);
+            --color-outline: var(--color-dark-outline);
+            --color-light-hover: var(--color-dark-hover);
+            --color-error: var(--color-dark-error);
+            --color-shadow: var(--color-dark-shadow);
+        }
+        
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+        }
+        
+        body { 
+            font-family: 'Inter', sans-serif; 
+            -webkit-font-smoothing: antialiased; 
+            color: var(--color-on-surface); 
+            background-color: var(--color-surface); 
+            transition: background-color 0.3s, color 0.3s; 
+            overflow-x: hidden;
+            line-height: 1.5;
+        }
+        
+        .material-symbols-rounded { 
+            font-variation-settings: 'FILL' 0, 'wght' 400, 'GRAD' 0, 'opsz' 24; 
+            user-select: none; 
+            display: inline-block; 
+            line-height: 1; 
+        }
+        
+        .material-symbols-rounded.filled { 
+            font-variation-settings: 'FILL' 1; 
+        }
+        
+        #app-container { 
+            display: flex; 
+            flex-direction: column; 
+            min-height: 100vh; 
+            max-width: 100%;
+            margin: 0 auto; 
+            position: relative; 
+            overflow: hidden; 
+            background: var(--color-surface);
+        }
+        
+        .elevation-1 {
+            box-shadow: 0 1px 3px rgba(0,0,0,0.12), 0 1px 2px rgba(0,0,0,0.24);
+        }
+        
+        .elevation-2 {
+            box-shadow: 0 3px 6px rgba(0,0,0,0.16), 0 3px 6px rgba(0,0,0,0.23);
+        }
+        
+        .elevation-3 { 
+            box-shadow: 0 10px 20px rgba(0,0,0,0.19), 0 6px 6px rgba(0,0,0,0.23);
+        }
+        
+        header { 
+            position: sticky; 
+            top: 0; 
+            background-color: var(--color-surface); 
+            border-bottom: 1px solid var(--color-outline);
+            z-index: 100; 
+            padding: 1rem;
+            display: flex; 
+            align-items: center; 
+            justify-content: space-between;
+            backdrop-filter: blur(10px);
+        }
+        
+        #main-content { 
+            flex-grow: 1; 
+            padding: 1rem; 
+            padding-bottom: 5rem; 
+            overflow-y: auto; 
+            background: var(--color-surface);
+        }
+        
+        #main-content::-webkit-scrollbar { 
+            display: none; 
+        }
+        
+        #main-content { 
+            -ms-overflow-style: none; 
+            scrollbar-width: none; 
+        }
+        
+        #bottom-bar { 
+            position: fixed; 
+            bottom: 0; 
+            width: 100%; 
+            max-width: 100%;
+            margin: 0 auto; 
+            background-color: var(--color-surface); 
+            border-top: 1px solid var(--color-outline);
+            z-index: 90; 
+            backdrop-filter: blur(10px);
+        }
+        
+        #bottom-bar nav { 
+            display: flex; 
+            justify-content: space-around; 
+            align-items: center; 
+            height: 4rem; 
+        }
+        
+        #drawer-menu { 
+            position: fixed; 
+            top: 0; 
+            left: 0; 
+            height: 100%; 
+            width: 280px; 
+            background-color: var(--color-surface); 
+            box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15); 
+            display: flex; 
+            flex-direction: column; 
+            transform: translateX(-100%); 
+            transition: transform 0.3s cubic-bezier(0.4, 0, 0.2, 1); 
+            z-index: 1000; 
+        }
+        
+        #drawer-menu.open { 
+            transform: translateX(0); 
+        }
+        
+        #drawer-overlay { 
+            position: fixed; 
+            inset: 0; 
+            background-color: rgba(0, 0, 0, 0.5); 
+            z-index: 900; 
+            display: none; 
+            backdrop-filter: blur(2px);
+        }
+        
+        .icon-button { 
+            padding: 0.5rem; 
+            border-radius: 50%; 
+            background: none; 
+            border: none; 
+            cursor: pointer; 
+            transition: all 0.2s ease; 
+            color: var(--color-on-surface); 
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            position: relative;
+        }
+        
+        .icon-button:hover { 
+            background-color: var(--color-light-hover); 
+            transform: scale(1.05);
+        }
+        
+        .icon-button:active {
+            transform: scale(0.95);
+        }
+        
+        .list-item { 
+            display: flex; 
+            align-items: center; 
+            padding: 1rem; 
+            margin-bottom: 0.5rem; 
+            border-radius: 12px; 
+            cursor: pointer; 
+            transition: all 0.2s ease; 
+            background-color: var(--color-surface); 
+            border: 1px solid transparent;
+        }
+        
+        .list-item:hover { 
+            background-color: var(--color-light-hover); 
+            border-color: var(--color-outline);
+            transform: translateY(-1px);
+        }
+        
+        .list-item.selected {
+            background-color: var(--color-light-hover);
+            border: 2px solid var(--color-primary);
+            box-shadow: 0 2px 8px rgba(211, 47, 47, 0.2);
+        }
+        
+        .context-menu-wrapper { 
+            position: relative; 
+            display: inline-block; 
+        }
+        
+        .context-menu { 
+            position: absolute; 
+            top: 100%; 
+            right: 0; 
+            z-index: 1000; 
+            width: 200px; 
+            margin-top: 0.5rem; 
+            border-radius: 12px; 
+            overflow: hidden; 
+            background-color: var(--color-surface); 
+            border: 1px solid var(--color-outline);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+        }
+        
+        .context-menu button { 
+            display: flex; 
+            align-items: center; 
+            width: 100%; 
+            padding: 0.75rem 1rem; 
+            text-align: left; 
+            background: none; 
+            border: none; 
+            cursor: pointer; 
+            color: var(--color-on-surface); 
+            transition: background-color 0.2s; 
+            font-size: 0.875rem; 
+            gap: 0.5rem;
+        }
+        
+        .context-menu button:hover { 
+            background-color: var(--color-light-hover); 
+        }
+        
+        .context-menu .divider { 
+            height: 1px; 
+            background-color: var(--color-outline); 
+            margin: 0.25rem 0;
+        }
+        
+        .context-menu .delete-button { 
+            color: var(--color-error); 
+        }
+        
+        .modal-overlay { 
+            position: fixed; 
+            inset: 0; 
+            background-color: rgba(0, 0, 0, 0.5); 
+            z-index: 1000; 
+            display: flex; 
+            align-items: center; 
+            justify-content: center; 
+            padding: 1rem; 
+            backdrop-filter: blur(4px);
+        }
+        
+        .modal-content { 
+            background-color: var(--color-surface); 
+            border-radius: 16px; 
+            box-shadow: 0 20px 40px rgba(0, 0, 0, 0.25); 
+            width: 100%; 
+            max-width: 400px; 
+            padding: 1.5rem; 
+            border: 1px solid var(--color-outline);
+        }
+        
+        #file-input-hidden { 
+            display: none; 
+        }
+        
+        @keyframes spin { 
+            0% { transform: rotate(0deg); } 
+            100% { transform: rotate(360deg); } 
+        }
+        
+        @keyframes slideIn {
+            from { transform: translateY(-10px); opacity: 0; }
+            to { transform: translateY(0); opacity: 1; }
+        }
+        
+        @keyframes fadeIn {
+            from { opacity: 0; }
+            to { opacity: 1; }
+        }
+        
+        .modal-button-primary { 
+            background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+            color: var(--color-on-primary); 
+            padding: 0.75rem 1.5rem; 
+            border-radius: 12px; 
+            font-weight: 600; 
+            transition: all 0.2s ease; 
+            border: none; 
+            cursor: pointer;
+            font-size: 0.875rem;
+        }
+        
+        .modal-button-primary:hover { 
+            transform: translateY(-1px);
+            box-shadow: 0 4px 12px rgba(211, 47, 47, 0.3);
+        }
+        
+        .modal-button-secondary { 
+            color: var(--color-secondary); 
+            padding: 0.75rem 1.5rem; 
+            border-radius: 12px; 
+            font-weight: 600; 
+            transition: all 0.2s ease; 
+            border: none; 
+            cursor: pointer; 
+            background: var(--color-surface-variant);
+            font-size: 0.875rem;
+        }
+        
+        .modal-button-secondary:hover { 
+            background-color: var(--color-light-hover); 
+            transform: translateY(-1px);
+        }
+        
+        /* Seçim modu stilleri */
+        .selection-mode .list-item {
+            cursor: pointer;
+        }
+        
+        .selection-actions {
+            display: none;
+            align-items: center;
+            gap: 0.25rem;
+        }
+        
+        .selection-mode .selection-actions {
+            display: flex;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .selection-mode .normal-actions {
+            display: none;
+        }
+        
+        .folder-item {
+            border-left: 4px solid #4CAF50;
+            position: relative;
+        }
+        
+        .folder-color-1 { border-left-color: #4CAF50; }
+        .folder-color-2 { border-left-color: #2196F3; }
+        .folder-color-3 { border-left-color: #FF9800; }
+        .folder-color-4 { border-left-color: #9C27B0; }
+        .folder-color-5 { border-left-color: #F44336; }
+        .folder-color-6 { border-left-color: #607D8B; }
+        
+        .locked-folder {
+            opacity: 0.8;
+            position: relative;
+        }
+        
+        .locked-folder::after {
+            content: "lock";
+            font-family: 'Material Symbols Rounded';
+            position: absolute;
+            top: 50%;
+            right: 1rem;
+            transform: translateY(-50%);
+            font-size: 1rem;
+            color: var(--color-on-surface-variant);
+        }
+        
+        .color-palette {
+            display: flex;
+            gap: 0.75rem;
+            flex-wrap: wrap;
+            margin: 1rem 0;
+            justify-content: center;
+        }
+        
+        .color-option {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 50%;
+            cursor: pointer;
+            border: 3px solid transparent;
+            transition: all 0.2s ease;
+            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+        }
+        
+        .color-option:hover {
+            transform: scale(1.1);
+        }
+        
+        .color-option.selected {
+            border-color: var(--color-on-surface);
+            transform: scale(1.15);
+        }
+        
+        /* Seçim modu için checkbox stilleri */
+        .selection-checkbox {
+            width: 1.25rem;
+            height: 1.25rem;
+            margin-right: 0.75rem;
+            border: 2px solid var(--color-outline);
+            border-radius: 4px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            cursor: pointer;
+            flex-shrink: 0;
+            transition: all 0.2s ease;
+            background: var(--color-surface);
+            position: relative;
+        }
+        
+        .selection-checkbox:hover {
+            border-color: var(--color-primary);
+        }
+        
+        .selection-checkbox.checked {
+            background: var(--color-primary);
+            border-color: var(--color-primary);
+        }
+        
+        .selection-checkbox.checked::after {
+            content: "check";
+            font-family: 'Material Symbols Rounded';
+            color: var(--color-on-primary);
+            font-size: 1rem;
+            font-weight: bold;
+            position: absolute;
+            top: 50%;
+            left: 50%;
+            transform: translate(-50%, -50%);
+        }
+        
+        .selection-mode .file-item-content {
+            cursor: pointer;
+        }
+        
+        .selection-header {
+            display: none;
+            align-items: center;
+            gap: 1rem;
+            flex-grow: 1;
+            margin-left: 1rem;
+            animation: slideIn 0.3s ease;
+        }
+        
+        .selection-mode .selection-header {
+            display: flex;
+        }
+        
+        .selection-mode .header-title {
+            display: none;
+        }
+        
+        .select-all-btn {
+            background: none;
+            border: none;
+            color: var(--color-primary);
+            font-weight: 600;
+            cursor: pointer;
+            padding: 0.5rem 1rem;
+            border-radius: 8px;
+            transition: all 0.2s ease;
+            font-size: 0.875rem;
+        }
+        
+        .select-all-btn:hover {
+            background-color: var(--color-light-hover);
+            transform: translateY(-1px);
+        }
+        
+        /* Responsive tasarım */
+        @media (min-width: 768px) {
+            #app-container {
+                max-width: 600px;
+                margin: 0 auto;
+                box-shadow: 0 0 40px rgba(0, 0, 0, 0.1);
+                min-height: 100vh;
+            }
+            
+            #bottom-bar {
+                max-width: 600px;
+                left: 50%;
+                transform: translateX(-50%);
+                border-radius: 20px 20px 0 0;
+                margin-bottom: 0.5rem;
+                bottom: 0.5rem;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            header {
+                padding: 0.75rem;
+            }
+            
+            #main-content {
+                padding: 0.75rem;
+                padding-bottom: 5rem;
+            }
+            
+            .list-item {
+                padding: 0.75rem;
+            }
+            
+            .modal-content {
+                padding: 1.25rem;
+                margin: 1rem;
+            }
+            
+            #bottom-bar nav {
+                height: 3.5rem;
+            }
+        }
+        
+        /* Dosya listesi stilleri */
+        .file-item-content {
+            display: flex;
+            align-items: center;
+            flex-grow: 1;
+            min-width: 0;
+            cursor: pointer;
+        }
+        
+        .file-info {
+            overflow: hidden;
+            white-space: nowrap;
+            text-overflow: ellipsis;
+            font-weight: 500;
+        }
+        
+        .file-details {
+            font-size: 0.75rem;
+            color: var(--color-on-surface-variant);
+            margin-top: 0.25rem;
+        }
+        
+        .file-actions {
+            display: flex;
+            align-items: center;
+            flex-shrink: 0;
+            margin-left: 0.75rem;
+        }
+        
+        /* Loading spinner */
+        .loading-spinner {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid rgba(211, 47, 47, 0.3);
+            border-radius: 50%;
+            border-top-color: var(--color-primary);
+            animation: spin 1s ease-in-out infinite;
+        }
+        
+        /* Sort menu */
+        .sort-menu {
+            position: absolute;
+            top: 100%;
+            right: 0;
+            z-index: 1000;
+            width: 200px;
+            margin-top: 0.5rem;
+            border-radius: 12px;
+            overflow: hidden;
+            background-color: var(--color-surface);
+            border: 1px solid var(--color-outline);
+            box-shadow: 0 8px 24px rgba(0,0,0,0.15);
+            display: none;
+        }
+        
+        .sort-menu button {
+            display: flex;
+            align-items: center;
+            width: 100%;
+            padding: 0.75rem 1rem;
+            text-align: left;
+            background: none;
+            border: none;
+            cursor: pointer;
+            color: var(--color-on-surface);
+            transition: background-color 0.2s;
+            font-size: 0.875rem;
+            gap: 0.5rem;
+        }
+        
+        .sort-menu button:hover {
+            background-color: var(--color-light-hover);
+        }
+        
+        .sort-menu button.active {
+            color: var(--color-primary);
+            font-weight: 600;
+            background-color: var(--color-light-hover);
+        }
+        
+        /* Move to folder modal */
+        .folder-list {
+            max-height: 200px;
+            overflow-y: auto;
+            margin: 1rem 0;
+            border: 1px solid var(--color-outline);
+            border-radius: 8px;
+            background: var(--color-surface-variant);
+        }
+        
+        .folder-list-item {
+            padding: 0.75rem 1rem;
+            cursor: pointer;
+            border-bottom: 1px solid var(--color-outline);
+            transition: background-color 0.2s;
+            display: flex;
+            align-items: center;
+            gap: 0.75rem;
+        }
+        
+        .folder-list-item:hover {
+            background-color: var(--color-light-hover);
+        }
+        
+        .folder-list-item:last-child {
+            border-bottom: none;
+        }
+        
+        .folder-list-item.selected {
+            background-color: var(--color-light-hover);
+            border-left: 4px solid var(--color-primary);
+        }
+        
+        /* Share modal */
+        .share-options {
+            display: flex;
+            flex-direction: column;
+            gap: 0.75rem;
+            margin: 1.5rem 0;
+        }
+        
+        .share-option {
+            display: flex;
+            align-items: center;
+            padding: 1rem;
+            border: 1px solid var(--color-outline);
+            border-radius: 12px;
+            cursor: pointer;
+            transition: all 0.2s ease;
+            background: var(--color-surface-variant);
+            gap: 0.75rem;
+        }
+        
+        .share-option:hover {
+            background-color: var(--color-light-hover);
+            border-color: var(--color-primary);
+            transform: translateY(-1px);
+        }
+        
+        .share-option .share-icon {
+            width: 2rem;
+            height: 2rem;
+            border-radius: 8px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-weight: bold;
+            color: white;
+            font-size: 0.875rem;
+        }
+        
+        .whatsapp { background: #25D366; }
+        .gmail { background: #EA4335; }
+        .telegram { background: #0088cc; }
+        .download { background: var(--color-primary); }
+        
+        /* Toast bildirimi */
+        #app-toast {
+            animation: slideIn 0.3s ease;
+        }
+        
+        /* Boş durum mesajı */
+        .empty-state {
+            text-align: center;
+            padding: 3rem 1rem;
+            color: var(--color-on-surface-variant);
+        }
+        
+        .empty-state .icon {
+            font-size: 3rem;
+            margin-bottom: 1rem;
+            color: var(--color-outline);
+        }
+        
+        /* Sekme stilleri */
+        .tab-button {
+            transition: all 0.3s ease;
+            position: relative;
+        }
+        
+        .tab-button.active::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 4px;
+            height: 4px;
+            background: var(--color-primary);
+            border-radius: 50%;
+        }
+    </style>
+</head>
+<body>
+
+    <div id="app-container">
+
+        <input type="file" id="file-input-hidden" accept="application/pdf" multiple />
+
+        <div id="drawer-overlay" onclick="window.closeDrawer()"></div>
+        <div id="drawer-menu">
+            <div style="padding: 1.5rem; border-bottom: 1px solid var(--color-outline);">
+                <h1 style="font-size: 1.5rem; font-weight: 800; color: var(--color-primary); margin-bottom: 0.5rem;">PDF Manager</h1>
+                <p style="font-size: 0.875rem; color: var(--color-on-surface-variant);">Profesyonel PDF Yöneticisi</p>
+            </div>
+            <nav style="flex-grow: 1; padding: 1rem; display: flex; flex-direction: column; gap: 0.5rem;">
+                <button class="list-item" style="background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark)); color: var(--color-on-primary); border: none;" onclick="window.triggerImport(); window.closeDrawer();">
+                    <span style="display: flex; align-items: center; font-weight: 600;">
+                        <span class="material-symbols-rounded filled" style="width: 1.25rem; height: 1.25rem; margin-right: 0.75rem;">file_upload</span> PDF İçe Aktar
+                    </span>
+                </button>
+                
+                <button class="list-item" style="background: none; box-shadow: none;" onclick="window.showAbout(); window.closeDrawer();">
+                    <span style="display: flex; align-items: center; color: var(--color-on-surface);">
+                        <span class="material-symbols-rounded" style="width: 1.25rem; height: 1.25rem; margin-right: 0.75rem;">info</span> Hakkında
+                    </span>
+                </button>
+                
+                <button class="list-item" style="background: none; box-shadow: none;" onclick="window.showPolicy(); window.closeDrawer();">
+                    <span style="display: flex; align-items: center; color: var(--color-on-surface);">
+                        <span class="material-symbols-rounded" style="width: 1.25rem; height: 1.25rem; margin-right: 0.75rem;">policy</span> Gizlilik Politikası
+                    </span>
+                </button>
+                
+                <button class="list-item" style="background: none; box-shadow: none;" onclick="window.showLanguageSettings(); window.closeDrawer();">
+                    <span style="display: flex; align-items: center; color: var(--color-on-surface);">
+                        <span class="material-symbols-rounded" style="width: 1.25rem; height: 1.25rem; margin-right: 0.75rem;">language</span> Dil
+                    </span>
+                </button>
+                
+                <div style="height: 1px; background-color: var(--color-outline); margin: 1rem 0;"></div>
+                
+                <button class="list-item" style="background: none; box-shadow: none;" onclick="window.updateTheme(!State.isDarkMode); window.closeDrawer();">
+                    <span id="theme-toggle-text" style="display: flex; align-items: center; color: var(--color-on-surface);">
+                    </span>
+                </button>
+            </nav>
+            <div style="padding: 1.5rem; font-size: 0.75rem; color: var(--color-on-surface-variant); border-top: 1px solid var(--color-outline);">
+                <p style="margin-bottom: 0.5rem;">📍 Veriler yerel veritabanında saklanır</p>
+                <p>🔒 Gizliliğiniz korunur</p>
+            </div>
+        </div>
+
+        <header>
+            <button class="icon-button" onclick="window.openDrawer()">
+                <span class="material-symbols-rounded" style="width: 1.5rem; height: 1.5rem;">menu</span>
+            </button>
+            
+            <h1 id="header-title" class="header-title" style="font-size: 1.25rem; font-weight: 700; flex-grow: 1; text-align: center; margin: 0 0.5rem; overflow: hidden; white-space: nowrap; text-overflow: ellipsis;">Tüm Dosyalar</h1>
+            
+            <!-- Seçim modu başlığı -->
+            <div class="selection-header">
+                <span id="selected-count" style="font-weight: 700; color: var(--color-primary); font-size: 1rem;">0 seçildi</span>
+                <button class="select-all-btn" onclick="window.toggleSelectAll()">Tümünü Seç</button>
+            </div>
+            
+            <div style="display: flex; gap: 0.25rem; align-items: center;">
+                <!-- Normal modda gösterilecek butonlar -->
+                <div class="normal-actions" style="display: flex; gap: 0.25rem;">
+                    <button class="icon-button" onclick="window.createNewFolder()">
+                        <span class="material-symbols-rounded" style="width: 1.25rem; height: 1.25rem;">create_new_folder</span>
+                    </button>
+                    <div class="context-menu-wrapper">
+                        <button class="icon-button" id="sort-button">
+                            <span class="material-symbols-rounded" style="width: 1.25rem; height: 1.25rem;">sort</span>
+                        </button>
+                        <div id="sort-menu" class="sort-menu">
+                            <button onclick="window.changeSortOrder('name-asc')" class="sort-option" data-sort="name-asc">
+                                <span class="material-symbols-rounded" style="width: 1rem; height: 1rem;">sort_by_alpha</span> A-Z
+                            </button>
+                            <button onclick="window.changeSortOrder('name-desc')" class="sort-option" data-sort="name-desc">
+                                <span class="material-symbols-rounded" style="width: 1rem; height: 1rem;">sort_by_alpha</span> Z-A
+                            </button>
+                            <button onclick="window.changeSortOrder('size')" class="sort-option" data-sort="size">
+                                <span class="material-symbols-rounded" style="width: 1rem; height: 1rem;">storage</span> Boyuta Göre
+                            </button>
+                            <button onclick="window.changeSortOrder('date')" class="sort-option" data-sort="date">
+                                <span class="material-symbols-rounded" style="width: 1rem; height: 1rem;">schedule</span> Son Eklenen
+                            </button>
+                        </div>
+                    </div>
+                    <button class="icon-button" onclick="window.toggleSelectionMode()">
+                        <span class="material-symbols-rounded" style="width: 1.25rem; height: 1.25rem;">checklist</span>
+                    </button>
+                </div>
+                
+                <!-- Seçim modunda gösterilecek butonlar -->
+                <div class="selection-actions">
+                    <button class="icon-button" onclick="window.shareSelectedFiles()">
+                        <span class="material-symbols-rounded" style="width: 1.25rem; height: 1.25rem;">share</span>
+                    </button>
+                    <button class="icon-button" onclick="window.printSelectedFiles()">
+                        <span class="material-symbols-rounded" style="width: 1.25rem; height: 1.25rem;">print</span>
+                    </button>
+                    <button class="icon-button" onclick="window.moveSelectedFiles()">
+                        <span class="material-symbols-rounded" style="width: 1.25rem; height: 1.25rem;">drive_file_move</span>
+                    </button>
+                    <button class="icon-button" onclick="window.deleteSelectedFiles()" style="color: var(--color-error);">
+                        <span class="material-symbols-rounded" style="width: 1.25rem; height: 1.25rem;">delete</span>
+                    </button>
+                    <button class="icon-button" onclick="window.toggleSelectionMode()">
+                        <span class="material-symbols-rounded" style="width: 1.25rem; height: 1.25rem;">close</span>
+                    </button>
+                </div>
+            </div>
+        </header>
+
+        <main id="main-content">
+            <div id="file-list" style="display: flex; flex-direction: column; gap: 0.75rem;">
+                <!-- Dosya ve klasörler buraya dinamik olarak eklenecek -->
+            </div>
+        </main>
+        
+        <div id="global-context-menu-container" style="display: none;">
+            <div id="context-menu" class="context-menu" style="display: none;"></div>
+        </div>
+
+        <footer id="bottom-bar">
+            <nav>
+                <button id="tab-all-files" data-tab-name="all-files" class="tab-button active" style="display: flex; flex-direction: column; align-items: center; color: var(--color-primary); font-weight: 700; transition: color 0.2s;">
+                    <span class="material-symbols-rounded filled" style="width: 1.5rem; height: 1.5rem;">folder</span>
+                    <span style="font-size: 0.75rem; margin-top: 0.25rem;">Tüm Dosyalar</span>
+                </button>
+
+                <button id="tab-recent" data-tab-name="recent" class="tab-button" style="display: flex; flex-direction: column; align-items: center; color: var(--color-on-surface-variant); transition: color 0.2s;">
+                    <span class="material-symbols-rounded" style="width: 1.5rem; height: 1.5rem;">history</span>
+                    <span style="font-size: 0.75rem; margin-top: 0.25rem;">Yakın Zaman</span>
+                </button>
+
+                <button id="tab-favorites" data-tab-name="favorites" class="tab-button" style="display: flex; flex-direction: column; align-items: center; color: var(--color-on-surface-variant); transition: color 0.2s;">
+                    <span class="material-symbols-rounded" style="width: 1.5rem; height: 1.5rem;">favorite</span>
+                    <span style="font-size: 0.75rem; margin-top: 0.25rem;">Favoriler</span>
+                </button>
+
+                <button id="tab-tools" data-tab-name="tools" class="tab-button" style="display: flex; flex-direction: column; align-items: center; color: var(--color-on-surface-variant); transition: color 0.2s;">
+                    <span class="material-symbols-rounded" style="width: 1.5rem; height: 1.5rem;">construction</span>
+                    <span style="font-size: 0.75rem; margin-top: 0.25rem;">Araçlar</span>
+                </button>
+            </nav>
+        </footer>
+
+        <!-- Modallar -->
+        <div id="import-progress-modal" class="modal-overlay" style="display: none;">
+            <div class="modal-content" style="text-align: center;">
+                <span class="material-symbols-rounded filled" style="width: 3rem; height: 3rem; color: var(--color-primary); margin: 0 auto 1rem; animation: spin 1s linear infinite;">cached</span>
+                <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">PDF Aktarılıyor</h3>
+                <p id="import-progress-text" style="color: var(--color-on-surface-variant);">Dosyalarınız işleniyor, lütfen bekleyin...</p>
+            </div>
+        </div>
+
+        <div id="rename-modal" class="modal-overlay" style="display: none;">
+            <div class="modal-content">
+                <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem;">Yeniden Adlandır</h3>
+                <form onsubmit="window.handleRenameSubmit(event)">
+                    <p style="font-size: 0.875rem; margin-bottom: 1rem; color: var(--color-on-surface-variant);">Yeni adı girin:</p>
+                    <input type="hidden" id="rename-file-id" />
+                    <div style="display: flex; align-items: center; padding: 0.5rem; margin-bottom: 1.5rem; border-radius: 8px; border: 1px solid var(--color-outline); background: var(--color-surface-variant);">
+                        <input type="text" id="rename-file-name" required style="flex-grow: 1; padding: 0.5rem; background: none; border: none; font-size: 1rem; color: var(--color-on-surface); outline: none;" />
+                        <span style="color: var(--color-on-surface-variant); margin: 0 0.5rem;">.pdf</span>
+                    </div>
+                    <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                        <button type="button" class="modal-button-secondary" onclick="window.closeRenameModal()">İptal</button>
+                        <button type="submit" class="modal-button-primary">Kaydet</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="folder-modal" class="modal-overlay" style="display: none;">
+            <div class="modal-content">
+                <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem;">Yeni Klasör</h3>
+                <form onsubmit="window.handleCreateFolder(event)">
+                    <p style="font-size: 0.875rem; margin-bottom: 1rem; color: var(--color-on-surface-variant);">Klasör adını girin:</p>
+                    <input type="text" id="folder-name" required placeholder="Klasör adı" style="width: 100%; padding: 1rem; margin-bottom: 1.5rem; border-radius: 8px; border: 1px solid var(--color-outline); background: var(--color-surface-variant); color: var(--color-on-surface); font-size: 1rem;" />
+                    <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                        <button type="button" class="modal-button-secondary" onclick="window.closeFolderModal()">İptal</button>
+                        <button type="submit" class="modal-button-primary">Oluştur</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="password-modal" class="modal-overlay" style="display: none;">
+            <div class="modal-content">
+                <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem;" id="password-modal-title">Klasörü Kilitle</h3>
+                <form onsubmit="window.handlePasswordSubmit(event)">
+                    <input type="hidden" id="password-folder-id" />
+                    <input type="hidden" id="password-action" />
+                    <div style="margin-bottom: 1.5rem;">
+                        <input type="password" id="password-input" required placeholder="Şifre" style="width: 100%; padding: 1rem; margin-bottom: 0.75rem; border-radius: 8px; border: 1px solid var(--color-outline); background: var(--color-surface-variant); color: var(--color-on-surface); font-size: 1rem;" />
+                        <input type="password" id="confirm-password-input" placeholder="Şifreyi Doğrula" style="width: 100%; padding: 1rem; border-radius: 8px; border: 1px solid var(--color-outline); background: var(--color-surface-variant); color: var(--color-on-surface); font-size: 1rem; display: none;" />
+                    </div>
+                    <div style="display: flex; justify-content: flex-end; gap: 0.75rem;">
+                        <button type="button" class="modal-button-secondary" onclick="window.closePasswordModal()">İptal</button>
+                        <button type="submit" class="modal-button-primary" id="password-submit-btn">Onayla</button>
+                    </div>
+                </form>
+            </div>
+        </div>
+
+        <div id="color-modal" class="modal-overlay" style="display: none;">
+            <div class="modal-content">
+                <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem;">Klasör Rengi</h3>
+                <input type="hidden" id="color-folder-id" />
+                <p style="font-size: 0.875rem; margin-bottom: 1rem; color: var(--color-on-surface-variant);">Bir renk seçin:</p>
+                <div class="color-palette">
+                    <div class="color-option" style="background-color: #4CAF50;" onclick="window.selectColor('#4CAF50')"></div>
+                    <div class="color-option" style="background-color: #2196F3;" onclick="window.selectColor('#2196F3')"></div>
+                    <div class="color-option" style="background-color: #FF9800;" onclick="window.selectColor('#FF9800')"></div>
+                    <div class="color-option" style="background-color: #9C27B0;" onclick="window.selectColor('#9C27B0')"></div>
+                    <div class="color-option" style="background-color: #F44336;" onclick="window.selectColor('#F44336')"></div>
+                    <div class="color-option" style="background-color: #607D8B;" onclick="window.selectColor('#607D8B')"></div>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+                    <button type="button" class="modal-button-secondary" onclick="window.closeColorModal()">İptal</button>
+                    <button type="button" class="modal-button-primary" onclick="window.applyColor()">Uygula</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="move-modal" class="modal-overlay" style="display: none;">
+            <div class="modal-content">
+                <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem;">Klasöre Taşı</h3>
+                <p style="font-size: 0.875rem; margin-bottom: 1rem; color: var(--color-on-surface-variant);">Hedef klasörü seçin:</p>
+                <div class="folder-list" id="move-folder-list">
+                    <!-- Klasörler buraya eklenecek -->
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+                    <button type="button" class="modal-button-secondary" onclick="window.closeMoveModal()">İptal</button>
+                    <button type="button" class="modal-button-primary" onclick="window.confirmMove()">Taşı</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="share-modal" class="modal-overlay" style="display: none;">
+            <div class="modal-content">
+                <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 1rem;">Paylaş</h3>
+                <p style="font-size: 0.875rem; margin-bottom: 1rem; color: var(--color-on-surface-variant);">Paylaşım yöntemini seçin:</p>
+                <div class="share-options">
+                    <div class="share-option" onclick="window.shareViaWhatsApp()">
+                        <div class="share-icon whatsapp">WA</div>
+                        <span>WhatsApp ile Paylaş</span>
+                    </div>
+                    <div class="share-option" onclick="window.shareViaGmail()">
+                        <div class="share-icon gmail">GM</div>
+                        <span>Gmail ile Paylaş</span>
+                    </div>
+                    <div class="share-option" onclick="window.shareViaTelegram()">
+                        <div class="share-icon telegram">TG</div>
+                        <span>Telegram ile Paylaş</span>
+                    </div>
+                    <div class="share-option" onclick="window.downloadSelectedFiles()">
+                        <div class="share-icon download">DL</div>
+                        <span>İndirme Bağlantısı</span>
+                    </div>
+                </div>
+                <div style="display: flex; justify-content: flex-end; gap: 0.75rem; margin-top: 1.5rem;">
+                    <button type="button" class="modal-button-secondary" onclick="window.closeShareModal()">İptal</button>
+                </div>
+            </div>
+        </div>
+
+        <div id="viewer-modal" style="display: none;"></div>
+
+    </div>
+
+    <script>
+        const DB_NAME = 'PDFManagerDB';
+        const DB_VERSION = 4;
+        const STORE_NAME = 'pdf_files';
+        const FOLDERS_STORE = 'folders';
+        let db = null;
+
+        const State = {
+            activeTab: 'all-files',
+            files: [],
+            folders: [],
+            selectedItems: [],
+            isSelectionMode: false,
+            sortOrder: 'date',
+            isDarkMode: localStorage.getItem('theme') === 'dark',
+            currentFolder: null,
+        };
+
+        let elements = {};
+        let currentContextMenuFileId = null;
+        let currentContextMenuFolderId = null;
+        let selectedColor = '#4CAF50';
+        let selectedMoveFolderId = null;
+
+        // --- Drawer Fonksiyonları ---
+        window.openDrawer = function() {
+            elements.drawer.classList.add('open');
+            elements.drawerOverlay.style.display = 'block';
+        }
+
+        window.closeDrawer = function() {
+            elements.drawer.classList.remove('open');
+            elements.drawerOverlay.style.display = 'none';
+        }
+
+        // --- Tema Fonksiyonu ---
+        window.updateTheme = function(isDark) {
+            State.isDarkMode = isDark;
+            localStorage.setItem('theme', isDark ? 'dark' : 'light');
+            document.body.classList.toggle('dark', isDark);
+
+            const themeToggleIcon = document.getElementById('theme-toggle-text');
+            if (themeToggleIcon) {
+                themeToggleIcon.innerHTML = isDark 
+                    ? `<span class="material-symbols-rounded" style="width: 1.25rem; height: 1.25rem; margin-right: 0.75rem;">light_mode</span> Açık Mod`
+                    : `<span class="material-symbols-rounded" style="width: 1.25rem; height: 1.25rem; margin-right: 0.75rem;">dark_mode</span> Koyu Mod`;
+            }
+            window.renderFilesList();
+        }
+
+        // --- Context Menu Fonksiyonları ---
+        window.openContextMenu = function(event, fileId, fileName) {
+            currentContextMenuFileId = fileId;
+            currentContextMenuFolderId = null;
+            window.closeContextMenu();
+
+            const button = event.currentTarget;
+            const wrapper = button.parentNode;
+            
+            elements.contextMenu.style.display = 'block';
+            elements.contextMenu.innerHTML = `
+                <button onclick="window.openRenameModal('${fileId}', '${fileName}')">
+                    <span class="material-symbols-rounded" style="width: 1rem; height: 1rem;">edit</span> Yeniden Adlandır
+                </button>
+                <button onclick="window.moveFileToFolder('${fileId}')">
+                    <span class="material-symbols-rounded" style="width: 1rem; height: 1rem;">folder_open</span> Klasöre Taşı
+                </button>
+                <div class="divider"></div>
+                <button class="delete-button" onclick="window.showDeleteConfirmation('${fileId}', '${fileName}', false)">
+                    <span class="material-symbols-rounded" style="width: 1rem; height: 1rem;">delete</span> Sil
+                </button>
+            `;
+            
+            wrapper.appendChild(elements.contextMenu);
+            setTimeout(() => { document.addEventListener('click', globalClickCloser); }, 0);
+        }
+
+        window.closeContextMenu = function() {
+            elements.contextMenu.style.display = 'none';
+            document.getElementById('global-context-menu-container').appendChild(elements.contextMenu);
+            document.removeEventListener('click', globalClickCloser);
+        }
+
+        function globalClickCloser(event) {
+            if (!elements.contextMenu.contains(event.target) && !event.target.closest('.menu-button')) {
+                window.closeContextMenu();
+            }
+        }
+
+        // --- Base64 Fonksiyonu ---
+        function base64ToArrayBuffer(base64DataUrl) {
+            const base64 = base64DataUrl.split(',')[1];
+            const binaryString = atob(base64);
+            const len = binaryString.length;
+            const bytes = new Uint8Array(len);
+            for (let i = 0; i < len; i++) {
+                bytes[i] = binaryString.charCodeAt(i);
+            }
+            return bytes.buffer;
+        }
+
+        // --- IndexedDB İşlevleri ---
+        function openDatabase() {
+            return new Promise((resolve, reject) => {
+                if (db) { resolve(db); return; }
+                const request = indexedDB.open(DB_NAME, DB_VERSION);
+                request.onupgradeneeded = (event) => {
+                    db = event.target.result;
+                    if (!db.objectStoreNames.contains(STORE_NAME)) {
+                        db.createObjectStore(STORE_NAME, { keyPath: 'id' });
+                    }
+                    if (!db.objectStoreNames.contains(FOLDERS_STORE)) {
+                        const folderStore = db.createObjectStore(FOLDERS_STORE, { keyPath: 'id' });
+                        folderStore.createIndex('createdAt', 'createdAt');
+                    }
+                };
+                request.onsuccess = (event) => { db = event.target.result; resolve(db); };
+                request.onerror = (event) => {
+                    console.error("IndexedDB hatası:", event.target.error);
+                    window.showToast("Veritabanı başlatılamadı.", 'error');
+                    reject(event.target.error);
+                };
+            });
+        }
+
+        async function loadFilesFromIndexedDB() {
+            try {
+                await openDatabase();
+                const transaction = db.transaction([STORE_NAME, FOLDERS_STORE], 'readonly');
+                const fileStore = transaction.objectStore(STORE_NAME);
+                const folderStore = transaction.objectStore(FOLDERS_STORE);
+                
+                const filesRequest = fileStore.getAll();
+                const foldersRequest = folderStore.getAll();
+                
+                return new Promise((resolve, reject) => {
+                    let filesLoaded = false;
+                    let foldersLoaded = false;
+                    
+                    filesRequest.onsuccess = (event) => {
+                        State.files = event.target.result.map(file => ({
+                            id: file.id,
+                            name: file.name,
+                            isFavorite: file.isFavorite,
+                            lastAccessed: new Date(file.lastAccessed),
+                            createdAt: new Date(file.createdAt),
+                            size: file.size || 0,
+                            folderId: file.folderId || null,
+                            data: file.data
+                        }));
+                        filesLoaded = true;
+                        if (foldersLoaded) {
+                            window.renderFilesList();
+                            resolve();
+                        }
+                    };
+                    
+                    foldersRequest.onsuccess = (event) => {
+                        State.folders = event.target.result.map(folder => ({
+                            id: folder.id,
+                            name: folder.name,
+                            color: folder.color || '#4CAF50',
+                            isLocked: folder.isLocked || false,
+                            password: folder.password || null,
+                            createdAt: new Date(folder.createdAt),
+                        }));
+                        foldersLoaded = true;
+                        if (filesLoaded) {
+                            window.renderFilesList();
+                            resolve();
+                        }
+                    };
+                    
+                    filesRequest.onerror = reject;
+                    foldersRequest.onerror = reject;
+                });
+            } catch (error) {
+                console.error("Dosya yükleme hatası:", error);
+                window.renderFilesList();
+            }
+        }
+        
+        async function saveFileToIndexedDB(file) {
+            elements.importProgressModal.style.display = 'flex';
+            const fileId = Date.now().toString() + Math.random().toString().slice(2, 6);
+
+            const base64Data = await new Promise((resolve, reject) => {
+                const reader = new FileReader();
+                reader.onload = () => resolve(reader.result);
+                reader.onerror = reject;
+                reader.readAsDataURL(file);
+            });
+            
+            try {
+                await openDatabase();
+                const transaction = db.transaction(STORE_NAME, 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+
+                const newFile = {
+                    id: fileId,
+                    name: file.name,
+                    isFavorite: false,
+                    lastAccessed: new Date().toISOString(),
+                    createdAt: new Date().toISOString(),
+                    size: file.size,
+                    data: base64Data,
+                    folderId: State.currentFolder ? State.currentFolder.id : null
+                };
+
+                await new Promise((resolve, reject) => {
+                    const request = store.put(newFile);
+                    request.onsuccess = resolve;
+                    request.onerror = reject;
+                });
+                
+                State.files.unshift({
+                    id: newFile.id,
+                    name: newFile.name,
+                    isFavorite: newFile.isFavorite,
+                    lastAccessed: new Date(),
+                    createdAt: new Date(),
+                    size: newFile.size,
+                    folderId: State.currentFolder ? State.currentFolder.id : null
+                });
+                window.renderFilesList();
+                window.showToast(`"${file.name}" başarıyla eklendi.`, 'success');
+
+            } catch (error) {
+                console.error("Dosya kaydetme hatası:", error);
+                window.showToast(`Dosya kaydedilemedi: ${error.message}`, 'error');
+            } finally {
+                elements.importProgressModal.style.display = 'none';
+                document.getElementById('file-input-hidden').value = '';
+            }
+        }
+
+        async function updateFile(fileId, updates) {
+            try {
+                await openDatabase();
+                const transaction = db.transaction(STORE_NAME, 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                const getRequest = store.get(fileId);
+
+                const file = await new Promise((resolve, reject) => {
+                    getRequest.onsuccess = () => resolve(getRequest.result);
+                    getRequest.onerror = reject;
+                });
+                
+                if (!file) { window.showToast('Hata: Dosya bulunamadı.', 'error'); return; }
+
+                const updatedFile = {
+                    ...file,
+                    ...updates,
+                    lastAccessed: new Date().toISOString()
+                };
+
+                await new Promise((resolve, reject) => {
+                    const putRequest = store.put(updatedFile);
+                    putRequest.onsuccess = resolve;
+                    putRequest.onerror = reject;
+                });
+
+                const index = State.files.findIndex(f => f.id === fileId);
+                if (index !== -1) {
+                    State.files[index] = { ...State.files[index], ...updates, lastAccessed: new Date() };
+                    window.renderFilesList();
+                }
+
+            } catch (error) {
+                console.error("Dosya güncelleme hatası:", error);
+                window.showToast('Dosya güncellenirken hata oluştu.', 'error');
+            }
+        }
+
+        async function deleteFile(fileId) {
+             try {
+                await openDatabase();
+                const transaction = db.transaction(STORE_NAME, 'readwrite');
+                const store = transaction.objectStore(STORE_NAME);
+                
+                await new Promise((resolve, reject) => {
+                    const deleteRequest = store.delete(fileId);
+                    deleteRequest.onsuccess = resolve;
+                    deleteRequest.onerror = reject;
+                });
+
+                State.files = State.files.filter(f => f.id !== fileId);
+                window.renderFilesList();
+                window.showToast('Dosya silindi.', 'success');
+
+            } catch (error) {
+                console.error("Dosya silme hatası:", error);
+                window.showToast('Dosya silinirken hata oluştu.', 'error');
+            }
+        }
+
+        // --- Klasör Fonksiyonları ---
+        async function updateFolder(folderId, updates) {
+            try {
+                await openDatabase();
+                const transaction = db.transaction(FOLDERS_STORE, 'readwrite');
+                const store = transaction.objectStore(FOLDERS_STORE);
+                const getRequest = store.get(folderId);
+
+                const folder = await new Promise((resolve, reject) => {
+                    getRequest.onsuccess = () => resolve(getRequest.result);
+                    getRequest.onerror = reject;
+                });
+                
+                if (!folder) {
+                    window.showToast('Hata: Klasör bulunamadı.', 'error');
+                    return;
+                }
+
+                const updatedFolder = { ...folder, ...updates };
+
+                await new Promise((resolve, reject) => {
+                    const putRequest = store.put(updatedFolder);
+                    putRequest.onsuccess = resolve;
+                    putRequest.onerror = reject;
+                });
+
+                const index = State.folders.findIndex(f => f.id === folderId);
+                if (index !== -1) {
+                    State.folders[index] = { ...State.folders[index], ...updates };
+                    window.renderFilesList();
+                }
+                return true;
+            } catch (error) {
+                console.error("Klasör güncelleme hatası:", error);
+                window.showToast('Klasör güncellenirken hata oluştu.', 'error');
+                return false;
+            }
+        }
+
+        async function deleteFolder(folderId) {
+            try {
+                await openDatabase();
+                const transaction = db.transaction([FOLDERS_STORE, STORE_NAME], 'readwrite');
+                const folderStore = transaction.objectStore(FOLDERS_STORE);
+                const fileStore = transaction.objectStore(STORE_NAME);
+                
+                // Klasördeki dosyaları root'a taşı
+                const filesInFolder = State.files.filter(f => f.folderId === folderId);
+                for (const file of filesInFolder) {
+                    const fileRecord = await new Promise((resolve, reject) => {
+                        const getRequest = fileStore.get(file.id);
+                        getRequest.onsuccess = () => resolve(getRequest.result);
+                        getRequest.onerror = reject;
+                    });
+                    
+                    if (fileRecord) {
+                        fileRecord.folderId = null;
+                        await new Promise((resolve, reject) => {
+                            const putRequest = fileStore.put(fileRecord);
+                            putRequest.onsuccess = resolve;
+                            putRequest.onerror = reject;
+                        });
+                    }
+                }
+
+                await new Promise((resolve, reject) => {
+                    const deleteRequest = folderStore.delete(folderId);
+                    deleteRequest.onsuccess = resolve;
+                    deleteRequest.onerror = reject;
+                });
+
+                State.folders = State.folders.filter(f => f.id !== folderId);
+                State.files.forEach(file => {
+                    if (file.folderId === folderId) {
+                        file.folderId = null;
+                    }
+                });
+                
+                window.renderFilesList();
+                window.showToast('Klasör silindi.', 'success');
+            } catch (error) {
+                console.error("Klasör silme hatası:", error);
+                window.showToast('Klasör silinirken hata oluştu.', 'error');
+            }
+        }
+
+        // --- Temel Fonksiyonlar ---
+        window.triggerImport = function() {
+            document.getElementById('file-input-hidden').click();
+        }
+
+        window.toggleFavorite = function(fileId, currentStatus) {
+            updateFile(fileId, { isFavorite: !currentStatus });
+        }
+
+        window.handleFileClick = async function(fileId, fileName) {
+            if (State.isSelectionMode) {
+                window.toggleItemSelection(fileId, false);
+                return;
+            }
+
+            updateFile(fileId, {});
+
+            try {
+                await openDatabase();
+                const transaction = db.transaction(STORE_NAME, 'readonly');
+                const store = transaction.objectStore(STORE_NAME);
+                const getRequest = store.get(fileId);
+
+                const fileRecord = await new Promise((resolve, reject) => {
+                    getRequest.onsuccess = () => resolve(getRequest.result);
+                    getRequest.onerror = reject;
+                });
+
+                if (!fileRecord || !fileRecord.data) {
+                    window.showToast("Hata: Dosya içeriği bulunamadı.", 'error');
+                    return;
+                }
+
+                const dataUrl = fileRecord.data;
+                const arrayBuffer = base64ToArrayBuffer(dataUrl);
+                const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
+                const blobUrl = URL.createObjectURL(blob);
+
+                const viewerUrl = `viewer.html?file=${encodeURIComponent(blobUrl)}#filename=${encodeURIComponent(fileName)}`;
+                const newWindow = window.open(viewerUrl, '_blank');
+
+                if (newWindow === null || typeof newWindow === 'undefined') {
+                    window.showToast("Popup engellendi. Lütfen izin verin.", 'error');
+                }
+
+            } catch (error) {
+                console.error("Dosya açma hatası:", error);
+                window.showToast('Dosya açılamadı.', 'error');
+            }
+        }
+
+        window.createNewFolder = function() {
+            elements.folderModal.style.display = 'flex';
+        }
+
+        window.closeFolderModal = function() {
+            elements.folderModal.style.display = 'none';
+            document.getElementById('folder-name').value = '';
+        }
+
+        window.handleCreateFolder = async function(event) {
+            event.preventDefault();
+            const folderName = document.getElementById('folder-name').value.trim();
+            if (!folderName) return;
+            
+            const folderId = 'folder_' + Date.now().toString() + Math.random().toString().slice(2, 6);
+            const newFolder = {
+                id: folderId,
+                name: folderName,
+                color: '#4CAF50',
+                isLocked: false,
+                password: null,
+                createdAt: new Date().toISOString(),
+            };
+            
+            try {
+                await openDatabase();
+                const transaction = db.transaction(FOLDERS_STORE, 'readwrite');
+                const store = transaction.objectStore(FOLDERS_STORE);
+                
+                await new Promise((resolve, reject) => {
+                    const request = store.put(newFolder);
+                    request.onsuccess = resolve;
+                    request.onerror = reject;
+                });
+                
+                State.folders.unshift({ ...newFolder, createdAt: new Date(newFolder.createdAt) });
+                window.renderFilesList();
+                window.closeFolderModal();
+                window.showToast(`"${folderName}" klasörü oluşturuldu.`, 'success');
+                
+            } catch (error) {
+                console.error("Klasör oluşturma hatası:", error);
+                window.showToast('Klasör oluşturulamadı.', 'error');
+            }
+        }
+
+        // --- Seçim Modu Fonksiyonları ---
+        window.toggleSelectionMode = function() {
+            State.isSelectionMode = !State.isSelectionMode;
+            State.selectedItems = [];
+            
+            if (State.isSelectionMode) {
+                document.getElementById('app-container').classList.add('selection-mode');
+                window.updateSelectedCount();
+                window.showToast('Seçim modu aktif. PDF dosyalarını seçmek için tıklayın.', 'info');
+            } else {
+                document.getElementById('app-container').classList.remove('selection-mode');
+                window.renderFilesList();
+            }
+        }
+
+        window.toggleItemSelection = function(itemId, isFolder = false) {
+            if (!State.isSelectionMode || isFolder) return;
+            
+            const index = State.selectedItems.findIndex(item => item.id === itemId && !item.isFolder);
+            if (index > -1) {
+                State.selectedItems.splice(index, 1);
+            } else {
+                State.selectedItems.push({ id: itemId, isFolder: false });
+            }
+            window.updateSelectedCount();
+            window.renderFilesList();
+        }
+
+        window.toggleSelectAll = function() {
+            if (!State.isSelectionMode) return;
+            
+            const currentFiles = getCurrentDisplayFiles();
+            const allSelected = currentFiles.every(file => 
+                State.selectedItems.some(selected => selected.id === file.id)
+            );
+            
+            if (allSelected) {
+                // Tümünü seçimi kaldır
+                State.selectedItems = State.selectedItems.filter(selected => 
+                    !currentFiles.some(file => file.id === selected.id)
+                );
+            } else {
+                // Tümünü seç
+                currentFiles.forEach(file => {
+                    if (!State.selectedItems.some(selected => selected.id === file.id)) {
+                        State.selectedItems.push({ id: file.id, isFolder: false });
+                    }
+                });
+            }
+            
+            window.updateSelectedCount();
+            window.renderFilesList();
+        }
+
+        window.updateSelectedCount = function() {
+            const countElement = document.getElementById('selected-count');
+            if (countElement) {
+                countElement.textContent = `${State.selectedItems.length} seçildi`;
+            }
+        }
+
+        function getCurrentDisplayFiles() {
+            let filteredItems = [];
+            let sortedFiles = [...State.files].sort((a, b) => {
+                switch (State.sortOrder) {
+                    case 'name-asc': return a.name.localeCompare(b.name);
+                    case 'name-desc': return b.name.localeCompare(a.name);
+                    case 'size': return (b.size || 0) - (a.size || 0);
+                    case 'date': 
+                    default: return new Date(b.lastAccessed) - new Date(a.lastAccessed);
+                }
+            });
+
+            switch (State.activeTab) {
+                case 'all-files': 
+                    if (State.currentFolder) {
+                        filteredItems = sortedFiles.filter(file => file.folderId === State.currentFolder.id);
+                    } else {
+                        filteredItems = sortedFiles.filter(file => !file.folderId);
+                    }
+                    break;
+                case 'recent': 
+                    filteredItems = sortedFiles.slice(0, 10);
+                    break;
+                case 'favorites': 
+                    filteredItems = sortedFiles.filter(f => f.isFavorite);
+                    break;
+            }
+            
+            return filteredItems;
+        }
+
+        function getCurrentDisplayItems() {
+            let filteredItems = [];
+            let sortedFolders = [...State.folders].sort((a, b) => new Date(b.createdAt) - new Date(a.createdAt));
+            let sortedFiles = [...State.files].sort((a, b) => {
+                switch (State.sortOrder) {
+                    case 'name-asc': return a.name.localeCompare(b.name);
+                    case 'name-desc': return b.name.localeCompare(a.name);
+                    case 'size': return (b.size || 0) - (a.size || 0);
+                    case 'date': 
+                    default: return new Date(b.lastAccessed) - new Date(a.lastAccessed);
+                }
+            });
+
+            switch (State.activeTab) {
+                case 'all-files': 
+                    if (State.currentFolder) {
+                        filteredItems = sortedFiles.filter(file => file.folderId === State.currentFolder.id);
+                    } else {
+                        filteredItems = [...sortedFolders, ...sortedFiles.filter(file => !file.folderId)];
+                    }
+                    break;
+                case 'recent': 
+                    filteredItems = sortedFiles.slice(0, 10);
+                    break;
+                case 'favorites': 
+                    filteredItems = sortedFiles.filter(f => f.isFavorite);
+                    break;
+            }
+            
+            return filteredItems;
+        }
+
+        window.deleteSelectedFiles = function() {
+            if (State.selectedItems.length === 0) {
+                window.showToast('Silinecek dosya seçilmedi.', 'info');
+                return;
+            }
+            
+            const confirmMessage = document.createElement('div');
+            confirmMessage.className = `modal-overlay`;
+            confirmMessage.innerHTML = `
+                <div class="modal-content" style="text-align: center;">
+                    <span class="material-symbols-rounded filled" style="width: 3rem; height: 3rem; color: var(--color-error); margin: 0 auto 1rem;">warning</span>
+                    <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">Seçili Dosyaları Sil</h3>
+                    <p style="margin-bottom: 1.5rem; color: var(--color-on-surface-variant);">${State.selectedItems.length} dosyayı silmek istediğinizden emin misiniz? Bu işlem geri alınamaz.</p>
+                    <div style="display: flex; justify-content: center; gap: 0.75rem;">
+                        <button type="button" class="modal-button-secondary" onclick="this.parentNode.parentNode.parentNode.remove()">İptal</button>
+                        <button type="button" style="background-color: var(--color-error); color: white;" class="modal-button-primary" onclick="window.confirmDeleteSelected(); this.parentNode.parentNode.parentNode.remove();">Sil</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(confirmMessage);
+        }
+
+        window.confirmDeleteSelected = async function() {
+            const fileIds = State.selectedItems.map(item => item.id);
+
+            for (const id of fileIds) {
+                await deleteFile(id);
+            }
+
+            State.selectedItems = [];
+            window.toggleSelectionMode();
+            window.showToast(`${fileIds.length} dosya silindi.`, 'success');
+        }
+
+        window.printSelectedFiles = function() {
+            if (State.selectedItems.length === 0) {
+                window.showToast('Yazdırılacak dosya seçilmedi.', 'info');
+                return;
+            }
+            
+            const fileIds = State.selectedItems.map(item => item.id);
+            window.showToast(`${fileIds.length} dosya yazdırılacak.`, 'info');
+        }
+
+        // --- Sıralama Fonksiyonları ---
+        window.changeSortOrder = function(sortType) {
+            State.sortOrder = sortType;
+            window.closeSortMenu();
+            window.renderFilesList();
+        }
+
+        window.closeSortMenu = function() {
+            elements.sortMenu.style.display = 'none';
+            document.querySelectorAll('.sort-option').forEach(btn => {
+                btn.classList.remove('active');
+                if (btn.dataset.sort === State.sortOrder) {
+                    btn.classList.add('active');
+                }
+            });
+        }
+
+        // --- UI Fonksiyonları ---
+        window.updateHeaderTitle = function() {
+            const titles = {
+                'all-files': State.currentFolder ? State.currentFolder.name : 'Tüm Dosyalar',
+                'recent': 'Yakın Zamanda',
+                'favorites': 'Favoriler',
+                'tools': 'Araçlar',
+            };
+            elements.headerTitle.textContent = titles[State.activeTab];
+        }
+
+        window.handleTabClick = function(event) {
+            const tabName = event.currentTarget.dataset.tabName;
+            State.activeTab = tabName;
+            State.currentFolder = null;
+            State.selectedItems = [];
+            State.isSelectionMode = false;
+            document.getElementById('app-container').classList.remove('selection-mode');
+            
+            window.updateHeaderTitle();
+            window.renderFilesList();
+            
+            document.querySelectorAll('.tab-button').forEach(btn => {
+                const icon = btn.querySelector('.material-symbols-rounded');
+                btn.style.color = 'var(--color-on-surface-variant)';
+                btn.style.fontWeight = '400';
+                btn.classList.remove('active');
+                if (icon) icon.style.fontVariationSettings = '\'FILL\' 0';
+            });
+            
+            const activeBtn = document.getElementById(`tab-${tabName}`);
+            const activeIcon = activeBtn.querySelector('.material-symbols-rounded');
+            activeBtn.style.color = 'var(--color-primary)';
+            activeBtn.style.fontWeight = '700';
+            activeBtn.classList.add('active');
+            if (activeIcon) activeIcon.style.fontVariationSettings = '\'FILL\' 1';
+        }
+
+        window.renderFileItem = function(file) {
+            const isFav = file.isFavorite;
+            const isSelected = State.selectedItems.some(item => item.id === file.id);
+            const fileNameForClick = file.name.replace(/'/g, "\\'");
+            const fileSizeMB = file.size > 0 ? (file.size / (1024 * 1024)).toFixed(1) + ' MB' : 'Boyut bilinmiyor';
+
+            const fileItem = document.createElement('div');
+            fileItem.className = `list-item ${isSelected ? 'selected' : ''}`;
+            fileItem.setAttribute('data-file-id', file.id);
+
+            fileItem.innerHTML = `
+                <div class="file-item-content" onclick="window.handleFileClick('${file.id}', '${fileNameForClick}')">
+                    ${State.isSelectionMode ? `
+                        <div class="selection-checkbox ${isSelected ? 'checked' : ''}" onclick="event.stopPropagation(); window.toggleItemSelection('${file.id}', false);">
+                        </div>
+                    ` : ''}
+                    <span class="material-symbols-rounded" style="width: 2rem; height: 2rem; color: var(--color-primary); margin-right: 1rem; flex-shrink: 0;">picture_as_pdf</span>
+                    <div class="file-info">
+                        <div style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 600; margin-bottom: 0.25rem;">${file.name}</div>
+                        <div class="file-details">${fileSizeMB} • ${file.lastAccessed.toLocaleDateString('tr-TR')}</div>
+                    </div>
+                </div>
+                
+                <div class="file-actions">
+                    <button class="icon-button" style="margin-right: 0.25rem; ${isFav ? 'color: var(--color-primary);' : 'color: var(--color-on-surface-variant);'}"
+                            onclick="event.stopPropagation(); window.toggleFavorite('${file.id}', ${isFav});">
+                        <span class="material-symbols-rounded" style="width: 1.25rem; height: 1.25rem; ${isFav ? 'font-variation-settings: \'FILL\' 1;' : ''}">favorite</span>
+                    </button>
+                    ${!State.isSelectionMode ? `
+                    <div class="context-menu-wrapper">
+                        <button class="icon-button menu-button" style="color: var(--color-on-surface-variant);"
+                                onclick="event.stopPropagation(); window.openContextMenu(event, '${file.id}', '${fileNameForClick}');">
+                            <span class="material-symbols-rounded" style="width: 1.25rem; height: 1.25rem;">more_vert</span>
+                        </button>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+            
+            return fileItem;
+        }
+
+        window.renderFolderItem = function(folder) {
+            const isLocked = folder.isLocked;
+            const folderNameForClick = folder.name.replace(/'/g, "\\'");
+            
+            const folderItem = document.createElement('div');
+            folderItem.className = `list-item folder-item ${isLocked ? 'locked-folder' : ''}`;
+            folderItem.setAttribute('data-folder-id', folder.id);
+            folderItem.style.borderLeftColor = folder.color;
+
+            folderItem.innerHTML = `
+                <div class="file-item-content" onclick="window.openFolder('${folder.id}')">
+                    <span class="material-symbols-rounded" style="width: 2rem; height: 2rem; color: ${folder.color}; margin-right: 1rem; flex-shrink: 0;">folder</span>
+                    <div class="file-info">
+                        <div style="overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-weight: 600; margin-bottom: 0.25rem;">${folder.name}</div>
+                        <div class="file-details">Klasör • ${new Date(folder.createdAt).toLocaleDateString('tr-TR')}</div>
+                    </div>
+                </div>
+                
+                <div class="file-actions">
+                    ${!State.isSelectionMode ? `
+                    <div class="context-menu-wrapper">
+                        <button class="icon-button menu-button" style="color: var(--color-on-surface-variant);"
+                                onclick="event.stopPropagation(); window.openFolderContextMenu(event, '${folder.id}', '${folderNameForClick}');">
+                            <span class="material-symbols-rounded" style="width: 1.25rem; height: 1.25rem;">more_vert</span>
+                        </button>
+                    </div>
+                    ` : ''}
+                </div>
+            `;
+            
+            return folderItem;
+        }
+
+        window.renderFilesList = function() {
+            elements.fileList.innerHTML = '';
+            
+            const filteredItems = getCurrentDisplayItems();
+
+            if (filteredItems.length === 0) {
+                const emptyState = document.createElement('div');
+                emptyState.className = 'empty-state';
+                
+                let icon = 'folder';
+                let text = "Dosya bulunamadı. Aktarmak için yukarıdaki butonu kullanın.";
+                
+                if (State.activeTab === 'favorites') {
+                    icon = 'favorite';
+                    text = "Favorilere eklenmiş dosya bulunamadı.";
+                } else if (State.activeTab === 'recent') {
+                    icon = 'history';
+                    text = "Yakın zamanda açılan dosya bulunamadı.";
+                } else if (State.currentFolder) {
+                    icon = 'folder_open';
+                    text = "Bu klasörde dosya bulunamadı.";
+                }
+                
+                emptyState.innerHTML = `
+                    <div class="icon material-symbols-rounded">${icon}</div>
+                    <p>${text}</p>
+                `;
+                elements.fileList.appendChild(emptyState);
+            } else {
+                if (State.currentFolder) {
+                    const backButton = document.createElement('div');
+                    backButton.className = 'list-item';
+                    backButton.innerHTML = `
+                        <div class="file-item-content" onclick="window.goBackToAllFiles()">
+                            <span class="material-symbols-rounded" style="width: 2rem; height: 2rem; color: var(--color-primary); margin-right: 1rem; flex-shrink: 0;">arrow_back</span>
+                            <div class="file-info">
+                                <div style="font-weight: 600;">Geri Dön</div>
+                                <div class="file-details">${State.currentFolder.name} klasöründen çık</div>
+                            </div>
+                        </div>
+                    `;
+                    elements.fileList.appendChild(backButton);
+                }
+
+                filteredItems.forEach(item => {
+                    if (item.id && item.id.startsWith('folder_')) {
+                        elements.fileList.appendChild(window.renderFolderItem(item));
+                    } else {
+                        elements.fileList.appendChild(window.renderFileItem(item));
+                    }
+                });
+            }
+        }
+
+        // --- Klasör İşlevleri ---
+        window.openFolder = function(folderId) {
+            if (State.isSelectionMode) return;
+            
+            const folder = State.folders.find(f => f.id === folderId);
+            if (!folder) return;
+
+            if (folder.isLocked) {
+                window.openPasswordModal(folderId, 'unlock');
+            } else {
+                State.currentFolder = folder;
+                State.activeTab = 'all-files';
+                window.updateHeaderTitle();
+                window.renderFilesList();
+            }
+        }
+
+        window.goBackToAllFiles = function() {
+            State.currentFolder = null;
+            window.updateHeaderTitle();
+            window.renderFilesList();
+        }
+
+        window.openFolderContextMenu = function(event, folderId, folderName) {
+            currentContextMenuFolderId = folderId;
+            currentContextMenuFileId = null;
+            window.closeContextMenu();
+
+            const folder = State.folders.find(f => f.id === folderId);
+            if (!folder) return;
+            
+            const button = event.currentTarget;
+            const wrapper = button.parentNode;
+            const lockAction = folder.isLocked ? 'Kilidi Aç' : 'Kilitle';
+
+            elements.contextMenu.style.display = 'block';
+            elements.contextMenu.innerHTML = `
+                <button onclick="window.openRenameModal('${folderId}', '${folderName}')">
+                    <span class="material-symbols-rounded" style="width: 1rem; height: 1rem;">edit</span> Yeniden Adlandır
+                </button>
+                <button onclick="window.lockFolder('${folderId}', ${folder.isLocked})">
+                    <span class="material-symbols-rounded" style="width: 1rem; height: 1rem;">${folder.isLocked ? 'lock_open' : 'lock'}</span> ${lockAction}
+                </button>
+                <button onclick="window.changeFolderColor('${folderId}')">
+                    <span class="material-symbols-rounded" style="width: 1rem; height: 1rem;">palette</span> Rengi Değiştir
+                </button>
+                <div class="divider"></div>
+                <button class="delete-button" onclick="window.showDeleteConfirmation('${folderId}', '${folderName}', true)">
+                    <span class="material-symbols-rounded" style="width: 1rem; height: 1rem;">delete</span> Sil
+                </button>
+            `;
+            
+            wrapper.appendChild(elements.contextMenu);
+            setTimeout(() => { document.addEventListener('click', globalClickCloser); }, 0);
+        }
+
+        // --- Taşıma İşlevleri ---
+        window.moveFileToFolder = function(fileId) {
+            window.closeContextMenu();
+            selectedMoveFolderId = null;
+            currentContextMenuFileId = fileId;
+            
+            const folderList = document.getElementById('move-folder-list');
+            folderList.innerHTML = '';
+            
+            const rootItem = document.createElement('div');
+            rootItem.className = 'folder-list-item';
+            rootItem.innerHTML = `
+                <span class="material-symbols-rounded" style="width: 1.5rem; height: 1.5rem; color: var(--color-primary);">home</span>
+                <span>Ana Dizin</span>
+            `;
+            rootItem.onclick = () => {
+                document.querySelectorAll('.folder-list-item').forEach(item => item.classList.remove('selected'));
+                rootItem.classList.add('selected');
+                selectedMoveFolderId = null;
+            };
+            folderList.appendChild(rootItem);
+            
+            State.folders.forEach(folder => {
+                if (folder.id !== currentContextMenuFileId) {
+                    const folderItem = document.createElement('div');
+                    folderItem.className = 'folder-list-item';
+                    folderItem.innerHTML = `
+                        <span class="material-symbols-rounded" style="width: 1.5rem; height: 1.5rem; color: ${folder.color};">folder</span>
+                        <span>${folder.name}</span>
+                    `;
+                    folderItem.onclick = () => {
+                        document.querySelectorAll('.folder-list-item').forEach(item => item.classList.remove('selected'));
+                        folderItem.classList.add('selected');
+                        selectedMoveFolderId = folder.id;
+                    };
+                    folderList.appendChild(folderItem);
+                }
+            });
+            
+            elements.moveModal.style.display = 'flex';
+        }
+
+        window.moveSelectedFiles = function() {
+            if (State.selectedItems.length === 0) {
+                window.showToast('Taşınacak dosya seçilmedi.', 'info');
+                return;
+            }
+            
+            selectedMoveFolderId = null;
+            const folderList = document.getElementById('move-folder-list');
+            folderList.innerHTML = '';
+            
+            const rootItem = document.createElement('div');
+            rootItem.className = 'folder-list-item';
+            rootItem.innerHTML = `
+                <span class="material-symbols-rounded" style="width: 1.5rem; height: 1.5rem; color: var(--color-primary);">home</span>
+                <span>Ana Dizin</span>
+            `;
+            rootItem.onclick = () => {
+                document.querySelectorAll('.folder-list-item').forEach(item => item.classList.remove('selected'));
+                rootItem.classList.add('selected');
+                selectedMoveFolderId = null;
+            };
+            folderList.appendChild(rootItem);
+            
+            State.folders.forEach(folder => {
+                const folderItem = document.createElement('div');
+                folderItem.className = 'folder-list-item';
+                folderItem.innerHTML = `
+                    <span class="material-symbols-rounded" style="width: 1.5rem; height: 1.5rem; color: ${folder.color};">folder</span>
+                    <span>${folder.name}</span>
+                `;
+                folderItem.onclick = () => {
+                    document.querySelectorAll('.folder-list-item').forEach(item => item.classList.remove('selected'));
+                    folderItem.classList.add('selected');
+                    selectedMoveFolderId = folder.id;
+                };
+                folderList.appendChild(folderItem);
+            });
+            
+            elements.moveModal.style.display = 'flex';
+        }
+
+        window.closeMoveModal = function() {
+            elements.moveModal.style.display = 'none';
+            selectedMoveFolderId = null;
+        }
+
+        window.confirmMove = async function() {
+            if (currentContextMenuFileId) {
+                await updateFile(currentContextMenuFileId, { folderId: selectedMoveFolderId });
+                window.showToast('Dosya taşındı.', 'success');
+            } else if (State.selectedItems.length > 0) {
+                const fileIds = State.selectedItems.map(item => item.id);
+                for (const fileId of fileIds) {
+                    await updateFile(fileId, { folderId: selectedMoveFolderId });
+                }
+                window.showToast(`${fileIds.length} dosya taşındı.`, 'success');
+                window.toggleSelectionMode();
+            }
+            
+            window.closeMoveModal();
+        }
+
+        // --- Paylaşım İşlevleri ---
+        window.shareSelectedFiles = function() {
+            if (State.selectedItems.length === 0) {
+                window.showToast('Paylaşılacak dosya seçilmedi.', 'info');
+                return;
+            }
+            elements.shareModal.style.display = 'flex';
+        }
+
+        window.closeShareModal = function() {
+            elements.shareModal.style.display = 'none';
+        }
+
+        window.shareViaWhatsApp = async function() {
+            const fileIds = State.selectedItems.map(item => item.id);
+            if (fileIds.length === 0) return;
+            
+            const file = State.files.find(f => f.id === fileIds[0]);
+            if (!file || !file.data) {
+                window.showToast('Dosya bulunamadı.', 'error');
+                return;
+            }
+
+            try {
+                const arrayBuffer = base64ToArrayBuffer(file.data);
+                const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
+                
+                if (navigator.share) {
+                    await navigator.share({
+                        title: file.name,
+                        text: 'PDF dosyası paylaşıyorum',
+                        files: [new File([blob], file.name, { type: 'application/pdf' })]
+                    });
+                } else {
+                    window.showToast('WhatsApp paylaşımı desteklenmiyor.', 'info');
+                }
+            } catch (error) {
+                console.error('Paylaşım hatası:', error);
+                window.showToast('Paylaşım sırasında hata oluştu.', 'error');
+            }
+            
+            window.closeShareModal();
+        }
+
+        window.shareViaGmail = function() {
+            const fileIds = State.selectedItems.map(item => item.id);
+            const fileNames = fileIds.map(id => {
+                const file = State.files.find(f => f.id === id);
+                return file ? file.name : 'Dosya';
+            }).join(', ');
+            
+            const subject = encodeURIComponent('PDF Dosyaları Paylaşımı');
+            const body = encodeURIComponent(`"${fileNames}" dosyalarını paylaşıyorum.`);
+            window.open(`mailto:?subject=${subject}&body=${body}`, '_blank');
+            window.closeShareModal();
+        }
+
+        window.shareViaTelegram = function() {
+            window.showToast('Telegram paylaşımı hazırlanıyor...', 'info');
+            window.closeShareModal();
+        }
+
+        window.downloadSelectedFiles = async function() {
+            const fileIds = State.selectedItems.map(item => item.id);
+            
+            for (const fileId of fileIds) {
+                const file = State.files.find(f => f.id === fileId);
+                if (!file || !file.data) continue;
+                
+                try {
+                    const arrayBuffer = base64ToArrayBuffer(file.data);
+                    const blob = new Blob([arrayBuffer], { type: 'application/pdf' });
+                    const blobUrl = URL.createObjectURL(blob);
+                    
+                    const a = document.createElement('a');
+                    a.href = blobUrl;
+                    a.download = file.name;
+                    document.body.appendChild(a);
+                    a.click();
+                    document.body.removeChild(a);
+                    
+                    URL.revokeObjectURL(blobUrl);
+                } catch (error) {
+                    console.error('İndirme hatası:', error);
+                }
+            }
+            
+            window.showToast(`${fileIds.length} dosya indirildi.`, 'success');
+            window.closeShareModal();
+        }
+
+        // --- Diğer İşlevler ---
+        window.showAbout = function() {
+            window.showToast('PDF Manager v3.0 - Modern PDF Yöneticisi', 'info');
+        }
+
+        window.showPolicy = function() {
+            window.showToast('Gizlilik politikası: Tüm veriler yerel cihazınızda saklanır.', 'info');
+        }
+
+        window.showLanguageSettings = function() {
+            window.showToast('Dil ayarları yakında eklenecek.', 'info');
+        }
+
+        // --- Klasör Kilitleme ---
+        window.lockFolder = function(folderId, isLocked) {
+            window.closeContextMenu();
+            if (isLocked) {
+                window.openPasswordModal(folderId, 'unlock-folder');
+            } else {
+                window.openPasswordModal(folderId, 'lock-folder');
+            }
+        }
+        
+        window.openPasswordModal = function(folderId, action) {
+            const folder = State.folders.find(f => f.id === folderId);
+            if (!folder) return;
+            
+            elements.passwordModal.style.display = 'flex';
+            document.getElementById('password-folder-id').value = folderId;
+            document.getElementById('password-action').value = action;
+            document.getElementById('password-input').value = '';
+            document.getElementById('confirm-password-input').value = '';
+
+            const title = document.getElementById('password-modal-title');
+            const confirmInput = document.getElementById('confirm-password-input');
+            const submitBtn = document.getElementById('password-submit-btn');
+
+            if (action === 'lock-folder') {
+                title.textContent = 'Klasörü Kilitle';
+                confirmInput.style.display = 'block';
+                confirmInput.setAttribute('required', 'required');
+                submitBtn.textContent = 'Kilitle';
+            } else if (action === 'unlock-folder') {
+                title.textContent = 'Klasör Kilidini Aç';
+                confirmInput.style.display = 'none';
+                confirmInput.removeAttribute('required');
+                submitBtn.textContent = 'Kilidi Aç';
+            } else if (action === 'unlock') {
+                 title.textContent = `"${folder.name}" Klasörünü Aç`;
+                confirmInput.style.display = 'none';
+                confirmInput.removeAttribute('required');
+                submitBtn.textContent = 'Aç';
+            }
+        }
+
+        window.closePasswordModal = function() {
+            elements.passwordModal.style.display = 'none';
+        }
+
+        window.handlePasswordSubmit = async function(event) {
+            event.preventDefault();
+            const folderId = document.getElementById('password-folder-id').value;
+            const action = document.getElementById('password-action').value;
+            const password = document.getElementById('password-input').value;
+            const confirmPassword = document.getElementById('confirm-password-input').value;
+            const folder = State.folders.find(f => f.id === folderId);
+
+            if (!folder) { window.closePasswordModal(); return; }
+
+            if (action === 'lock-folder') {
+                if (password !== confirmPassword) {
+                    window.showToast('Şifreler uyuşmuyor.', 'error');
+                    return;
+                }
+                const success = await updateFolder(folderId, { isLocked: true, password: password });
+                if (success) window.showToast(`"${folder.name}" klasörü kilitlendi.`, 'success');
+
+            } else if (action === 'unlock-folder' || action === 'unlock') {
+                if (password === folder.password) {
+                    const updates = action === 'unlock-folder' ? { isLocked: false, password: null } : {};
+                    const success = await updateFolder(folderId, updates);
+
+                    if (success) {
+                        const message = action === 'unlock-folder' ? `"${folder.name}" klasörünün kilidi açıldı.` : `"${folder.name}" klasörüne giriş yapıldı.`;
+                        window.showToast(message, 'success');
+                        if (action === 'unlock') {
+                            State.currentFolder = folder;
+                            State.activeTab = 'all-files';
+                            window.updateHeaderTitle();
+                            window.renderFilesList();
+                        }
+                    }
+                } else {
+                    window.showToast('Yanlış şifre.', 'error');
+                    return;
+                }
+            }
+            window.closePasswordModal();
+        }
+
+        // --- Klasör Renk ---
+        window.changeFolderColor = function(folderId) {
+            window.closeContextMenu();
+            const folder = State.folders.find(f => f.id === folderId);
+            if (!folder) return;
+            
+            document.getElementById('color-folder-id').value = folderId;
+            selectedColor = folder.color;
+            
+            document.querySelectorAll('.color-option').forEach(option => {
+                option.classList.remove('selected');
+                if (option.style.backgroundColor.toLowerCase() === selectedColor.toLowerCase()) {
+                    option.classList.add('selected');
+                }
+            });
+            elements.colorModal.style.display = 'flex';
+        }
+
+        window.selectColor = function(color) {
+            selectedColor = color;
+            document.querySelectorAll('.color-option').forEach(option => {
+                option.classList.remove('selected');
+                if (option.style.backgroundColor.toLowerCase() === color.toLowerCase()) {
+                    option.classList.add('selected');
+                }
+            });
+        }
+
+        window.applyColor = async function() {
+            const folderId = document.getElementById('color-folder-id').value;
+            const folder = State.folders.find(f => f.id === folderId);
+            if (!folder) { window.closeColorModal(); return; }
+
+            const success = await updateFolder(folderId, { color: selectedColor });
+            if (success) {
+                window.showToast(`"${folder.name}" klasörünün rengi değiştirildi.`, 'success');
+            }
+            window.closeColorModal();
+        }
+
+        window.closeColorModal = function() {
+            elements.colorModal.style.display = 'none';
+        }
+
+        // --- Yeniden Adlandırma ---
+        window.openRenameModal = function(itemId, currentName) {
+            window.closeContextMenu();
+            const isFolder = itemId.startsWith('folder_');
+            
+            const nameInput = document.getElementById('rename-file-name');
+            const extSpan = document.querySelector('#rename-modal .modal-content span');
+
+            if (isFolder) {
+                nameInput.value = currentName;
+                extSpan.style.display = 'none';
+            } else {
+                nameInput.value = currentName.replace('.pdf', '');
+                extSpan.style.display = 'inline';
+            }
+
+            document.getElementById('rename-file-id').value = itemId;
+            elements.renameModal.style.display = 'flex';
+        }
+
+        window.closeRenameModal = function() {
+            elements.renameModal.style.display = 'none';
+        }
+
+        window.handleRenameSubmit = async function(event) {
+            event.preventDefault();
+            const itemId = document.getElementById('rename-file-id').value;
+            const newName = document.getElementById('rename-file-name').value.trim();
+            if (!itemId || !newName) return;
+            
+            let success = false;
+            let oldName = '';
+
+            if (itemId.startsWith('folder_')) {
+                const folder = State.folders.find(f => f.id === itemId);
+                oldName = folder ? folder.name : 'Klasör';
+                success = await updateFolder(itemId, { name: newName });
+                if (success) window.showToast(`Klasör "${oldName}"'dan "${newName}" olarak yeniden adlandırıldı.`, 'success');
+
+            } else {
+                const file = State.files.find(f => f.id === itemId);
+                oldName = file ? file.name : 'Dosya';
+                const newFullName = newName + (newName.toLowerCase().endsWith('.pdf') ? '' : '.pdf');
+                success = await updateFile(itemId, { name: newFullName });
+                if (success) window.showToast(`Dosya "${oldName}"'dan "${newFullName}" olarak yeniden adlandırıldı.`, 'success');
+            }
+
+            if (success) {
+                window.closeRenameModal();
+            }
+        }
+
+        // --- Silme Onayı ---
+        window.showDeleteConfirmation = function(itemId, itemName, isFolder) {
+            window.closeContextMenu();
+            
+            const type = isFolder ? 'Klasörü' : 'Dosyayı';
+            const itemType = isFolder ? 'klasörünü' : 'dosyasını';
+            const confirmMessage = document.createElement('div');
+            confirmMessage.className = `modal-overlay`;
+            confirmMessage.innerHTML = `
+                <div class="modal-content" style="text-align: center;">
+                    <span class="material-symbols-rounded filled" style="width: 3rem; height: 3rem; color: var(--color-error); margin: 0 auto 1rem;">warning</span>
+                    <h3 style="font-size: 1.25rem; font-weight: 700; margin-bottom: 0.5rem;">${type} Sil</h3>
+                    <p style="margin-bottom: 1.5rem; color: var(--color-on-surface-variant);">"${itemName}" ${itemType} silmek istediğinizden emin misiniz? ${isFolder ? 'Klasör silinince içindeki dosyalar ana dizine taşınır.' : ''} Bu işlem geri alınamaz.</p>
+                    <div style="display: flex; justify-content: center; gap: 0.75rem;">
+                        <button type="button" class="modal-button-secondary" onclick="this.parentNode.parentNode.parentNode.remove()">İptal</button>
+                        <button type="button" style="background-color: var(--color-error); color: white;" class="modal-button-primary" onclick="window.confirmDeleteItem('${itemId}', ${isFolder}); this.parentNode.parentNode.parentNode.remove();">Sil</button>
+                    </div>
+                </div>
+            `;
+            document.body.appendChild(confirmMessage);
+        }
+
+        window.confirmDeleteItem = function(itemId, isFolder) {
+            if (isFolder) {
+                deleteFolder(itemId);
+            } else {
+                deleteFile(itemId);
+            }
+        }
+
+        // --- Toast Bildirimi ---
+        window.showToast = function(message, type = 'success') {
+            const existingToast = document.getElementById('app-toast');
+            if (existingToast) existingToast.remove();
+
+            let icon = 'info';
+            let iconColor = 'var(--color-primary)';
+            if (type === 'success') { icon = 'check_circle'; iconColor = '#4CAF50'; }
+            else if (type === 'error') { icon = 'error'; iconColor = 'var(--color-error)'; }
+            else if (type === 'info') { icon = 'info'; iconColor = '#2196F3'; }
+            else if (type === 'warning') { icon = 'warning'; iconColor = '#FF9800'; }
+
+            const toastBox = document.createElement('div');
+            toastBox.id = 'app-toast';
+            toastBox.className = `elevation-3`;
+            toastBox.style.cssText = `
+                position: fixed; bottom: 6rem; left: 50%; transform: translateX(-50%);
+                padding: 1rem 1.5rem; border-radius: 12px;
+                background-color: var(--color-on-surface); color: var(--color-surface);
+                display: flex; align-items: center; gap: 0.75rem; z-index: 1000;
+                transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1); font-size: 0.875rem; font-weight: 500;
+                max-width: 90%; white-space: nowrap; overflow: hidden; text-overflow: ellipsis;
+                border: 1px solid var(--color-outline);
+            `;
+            toastBox.innerHTML = `
+                <span class="material-symbols-rounded filled" style="color: ${iconColor}; font-size: 1.25rem;">${icon}</span>
+                <span>${message}</span>
+            `;
+            document.body.appendChild(toastBox);
+
+            setTimeout(() => {
+                toastBox.style.opacity = '0';
+                toastBox.style.transform = 'translate(-50%, 1rem)';
+                setTimeout(() => toastBox.remove(), 300);
+            }, 3000);
+        }
+
+        // --- Uygulama Başlatma ---
+        function initializeApp() {
+            elements = {
+                headerTitle: document.getElementById('header-title'),
+                fileList: document.getElementById('file-list'),
+                drawer: document.getElementById('drawer-menu'),
+                drawerOverlay: document.getElementById('drawer-overlay'),
+                importProgressModal: document.getElementById('import-progress-modal'),
+                renameModal: document.getElementById('rename-modal'),
+                folderModal: document.getElementById('folder-modal'),
+                passwordModal: document.getElementById('password-modal'),
+                colorModal: document.getElementById('color-modal'),
+                moveModal: document.getElementById('move-modal'),
+                shareModal: document.getElementById('share-modal'),
+                contextMenu: document.getElementById('context-menu'),
+                sortMenu: document.getElementById('sort-menu'),
+                sortButton: document.getElementById('sort-button')
+            };
+            
+            elements.sortButton.addEventListener('click', function(event) {
+                event.stopPropagation();
+                elements.sortMenu.style.display = elements.sortMenu.style.display === 'block' ? 'none' : 'block';
+            });
+            
+            document.addEventListener('click', function(event) {
+                if (!event.target.closest('#sort-button') && !event.target.closest('#sort-menu')) {
+                    elements.sortMenu.style.display = 'none';
+                }
+            });
+            
+            const fileInput = document.getElementById('file-input-hidden');
+            fileInput.addEventListener('change', (event) => {
+                if (event.target.files.length > 0) {
+                    for (let file of event.target.files) {
+                        if (file.type === 'application/pdf') {
+                            saveFileToIndexedDB(file);
+                        } else {
+                            window.showToast('Lütfen sadece PDF dosyaları seçin.', 'error');
+                        }
+                    }
+                    event.target.value = '';
+                }
+            });
+            
+            document.querySelectorAll('#bottom-bar button').forEach(btn => {
+                btn.addEventListener('click', window.handleTabClick);
+            });
+
+            window.updateTheme(State.isDarkMode);
+            loadFilesFromIndexedDB();
+            window.handleTabClick({currentTarget: document.getElementById('tab-all-files')});
+        }
+
+        document.addEventListener('DOMContentLoaded', initializeApp);
+    </script>
+
+</body>
+</html>

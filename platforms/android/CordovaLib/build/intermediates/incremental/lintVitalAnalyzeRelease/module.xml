@@ -1,0 +1,19 @@
+<lint-module
+    format="1"
+    dir="/home/runner/work/cordo/cordo/pdfreader/platforms/android/CordovaLib"
+    name=":CordovaLib"
+    type="LIBRARY"
+    maven="PDF Reader:CordovaLib:unspecified"
+    agpVersion="8.7.3"
+    buildFolder="build"
+    bootClassPath="/usr/local/lib/android/sdk/platforms/android-35/android.jar:/usr/local/lib/android/sdk/build-tools/35.0.1/core-lambda-stubs.jar"
+    javaSourceLevel="11"
+    compileTarget="android-35"
+    neverShrinking="true">
+  <lintOptions
+      abortOnError="true"
+      absolutePaths="true"
+      checkReleaseBuilds="true"
+      explainIssues="true"/>
+  <variant name="release"/>
+</lint-module>
