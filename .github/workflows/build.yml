@@ -30,10 +30,12 @@ jobs:
       - name: 📦 Cordova CLI Kurulumu
         run: npm install -g cordova
 
+      # 🔐 Keystore'u base64'ten decode et (SECRET'ten güvenli şekilde alınır)
       - name: 🔐 Keystore'u Base64'ten Decode Et
         run: |
           echo "${{ secrets.KEYSTORE_BASE64 }}" | base64 -d > my-release-key.keystore
 
+      # 📝 build.json dosyasını güvenli şekilde oluştur
       - name: 📝 build.json Dosyasını Oluştur
         run: |
           cat > build.json <<EOF
@@ -50,14 +52,16 @@ jobs:
           }
           EOF
 
+      # 🛠️ Release APK oluştur (AAB değil, APK)
       - name: 🛠️ APK Oluştur (Release)
         run: |
           cordova build android --release --buildConfig=build.json -- --packageType=apk
 
+      # 📦 Oluşan APK'yi bul ve klasöre kopyala
       - name: 📦 APK'yi Bul ve Kopyala
         run: |
           APK_PATH=$(find platforms/android/app/build/outputs/apk/release -name "*.apk" | head -n 1)
-          echo "Found APK: $APK_PATH"
+          echo "✅ APK bulundu: $APK_PATH"
           if [ -f "$APK_PATH" ]; then
             mkdir -p upload-apk
             cp "$APK_PATH" upload-apk/
@@ -66,6 +70,7 @@ jobs:
             exit 1
           fi
 
+      # ☁️ Artifact olarak GitHub Actions'a yükle
       - name: ☁️ APK’yi Artifact Olarak Yükle
         uses: actions/upload-artifact@v4
         with:
