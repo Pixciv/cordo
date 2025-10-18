@@ -1,0 +1,11 @@
+{
+  "android": {
+    "release": {
+      "keystore": "my-release-key.keystore",
+      "storePassword": "Artik.1234",
+      "alias": "Arvin",
+      "password": "Artik.1234",
+      "keystoreType": ""
+    }
+  }
+}
